@@ -32,7 +32,7 @@ from rtml.dataset import day_ts, labels_as_of, load
 from rtml.experiments.common import dataset, r, save
 from rtml.experiments.offline import _frames
 from rtml.features.defs import model_matrix
-from rtml.monitor.drift import PSI_ALERT, edges, flag_rate_z, psi
+from rtml.monitor.drift import PSI_ALERT, TRENDING, edges, flag_rate_z, psi
 from rtml.train import Spec, fit
 
 DRIFT_DAY = 70
@@ -42,9 +42,6 @@ WINDOW_H = 24
 Z_ALERT = 4.0
 RECALL_DROP = 0.10
 MIN_LABELLED = 30
-# Features that trend with the calendar rather than with behaviour: accounts age, and the
-# 90-day chargeback count fills up as the data's history grows.
-TRENDING = {"account_age_days", "cust_chargebacks_90d"}
 
 Rule = Callable[[float, float, float, float, "float | None", float], bool]
 MONITORS: dict[str, Rule] = {
@@ -79,7 +76,7 @@ def run_one(seed: int, drift: bool) -> dict[str, Any]:
     ts = mon["ts"]
     onset = day_ts(cfg, DRIFT_DAY)
 
-    windows = []
+    windows: list[dict[str, Any]] = []
     t = day_ts(cfg, MONITOR[0]) + pd.Timedelta(hours=WINDOW_H)
     end = day_ts(cfg, MONITOR[1] + 1)
     while t <= end:

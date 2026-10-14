@@ -57,7 +57,7 @@ files = ["src"]
 plugins = []
 
 [[tool.mypy.overrides]]
-module = ["lightgbm.*", "feast.*", "mlflow.*", "sklearn.*", "confluent_kafka.*", "evalproof.*", "duckdb.*", "redis.*", "psycopg.*", "prometheus_client.*"]
+module = ["lightgbm.*", "feast.*", "mlflow.*", "sklearn.*", "confluent_kafka.*", "evalproof.*", "duckdb.*", "redis.*", "psycopg.*", "prometheus_client.*", "scipy.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # The uv that wrote uv.lock; a different one can resolve exclude-newer differently.
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.23"
+      - run: uv sync --frozen
+      - name: ruff
+        run: uv run ruff check src tests && uv run ruff format --check src tests
+      - name: mypy (strict, src)
+        run: uv run mypy
+      - name: tests
+        run: uv run pytest
+
+  e2e:
+    # The whole stack on the runner: Kafka, Redis, Postgres, MLflow, Prometheus, the API,
+    # the stream processor and the monitor; a short replay, the parity check and the gate.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - name: up
+        run: make up
+      - name: train
+        run: make train
+      - name: serve
+        run: make serve
+      - name: smoke
+        run: docker compose run --rm tools python -m rtml.demo --quick
+      - name: logs on failure
+        if: failure()
+        run: docker compose --profile serve logs --tail 200
+      - name: down
+        if: always()
+        run: make down

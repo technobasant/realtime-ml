@@ -153,7 +153,7 @@ def decide(
 
 def main() -> None:
     """Gate the live stack: read the shadow log, join matured labels, decide, maybe promote."""
-    from rtml.serve.gate_live import run_live_gate
+    from rtml.serve.live import run_live_gate
 
     p = argparse.ArgumentParser(description="Compare challenger and champion on the shadow log.")
     p.add_argument("--label-delay-days", type=float, default=30.0)

@@ -1,0 +1,31 @@
+groups:
+  - name: realtime-ml
+    rules:
+      # Features that trend with the calendar (account age, the 90-day chargeback count)
+      # are excluded: against a fixed reference they fire whether or not anything changed.
+      - alert: FeatureDrift
+        expr: max(rtml_feature_psi{trending="false"}) > 0.2
+        for: 15s
+        labels: { severity: warn }
+        annotations:
+          summary: "A model feature has drifted from the training reference (PSI > 0.2)"
+      # |z| > 8 rather than 4: fraud arrives in bursts, so the binomial noise model
+      # underestimates the variance and z > 4 fired on 17% of drift-free windows.
+      - alert: FlagRateShift
+        expr: abs(rtml_flag_rate_z) > 8
+        for: 15s
+        labels: { severity: warn }
+        annotations:
+          summary: "The champion's flag rate has moved away from its reference"
+      - alert: ScoringLatencyHigh
+        expr: histogram_quantile(0.99, sum(rate(rtml_request_seconds_bucket[1m])) by (le)) > 0.05
+        for: 30s
+        labels: { severity: page }
+        annotations:
+          summary: "p99 scoring latency over 50 ms"
+      - alert: StreamLagHigh
+        expr: histogram_quantile(0.99, sum(rate(rtml_stream_lag_seconds_bucket[1m])) by (le)) > 1
+        for: 30s
+        labels: { severity: warn }
+        annotations:
+          summary: "Events take more than a second to reach the online store"

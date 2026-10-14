@@ -16,6 +16,10 @@ from scipy.stats import ks_2samp
 FloatArray = NDArray[np.float64]
 EPS = 1e-4
 PSI_ALERT = 0.2
+# Features that trend with the calendar rather than with behaviour: accounts age, and the
+# 90-day chargeback count fills up as history accumulates. PSI against a fixed reference
+# fires on them whether or not anything has changed.
+TRENDING = frozenset({"account_age_days", "cust_chargebacks_90d"})
 
 
 def edges(ref: FloatArray, bins: int = 10) -> FloatArray:

@@ -45,6 +45,7 @@ class GenConfig:
     start: str = "2026-07-01"
     drift_day: int | None = None
     drift_inflation: float = 1.15
+    # Fraud volumes per day for 8,000 customers; scaled with the customer count.
     card_testing_bursts_per_day: float = 3.0
     ato_per_day: float = 8.0
     lone_anomaly_per_day: float = 12.0
@@ -126,9 +127,10 @@ def generate(cfg: GenConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
         return f"k_{v}_{int(rng.integers(0, n_cards[v]))}"
 
     rows: list[tuple[float, str, str, str, str, float, str, bool, str]] = []
+    scale = n / 8000
 
     # --- card testing: many victims' cards from a few devices, small amounts ---
-    for b in range(rng.poisson(cfg.card_testing_bursts_per_day * cfg.days)):
+    for b in range(rng.poisson(cfg.card_testing_bursts_per_day * scale * cfg.days)):
         t0 = rng.uniform(0, span_s - 9 * 3600)
         q = quiet(t0)
         k = int(rng.integers(4, 25))
@@ -152,7 +154,7 @@ def generate(cfg: GenConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
                 )
             )
     # --- account takeover: a victim's account, a new device, a few larger purchases ---
-    for a in range(rng.poisson(cfg.ato_per_day * cfg.days)):
+    for a in range(rng.poisson(cfg.ato_per_day * scale * cfg.days)):
         v = int(rng.integers(0, n))
         t0 = rng.uniform(0, span_s - 4 * 3600)
         q = quiet(t0)
@@ -177,7 +179,7 @@ def generate(cfg: GenConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
                 )
             )
     # --- lone anomaly: one larger purchase, sometimes from the victim's own (stolen) device ---
-    for a in range(rng.poisson(cfg.lone_anomaly_per_day * cfg.days)):
+    for a in range(rng.poisson(cfg.lone_anomaly_per_day * scale * cfg.days)):
         v = int(rng.integers(0, n))
         t = float(rng.uniform(0, span_s - 1))
         q = quiet(t)
