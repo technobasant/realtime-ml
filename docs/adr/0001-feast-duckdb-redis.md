@@ -26,7 +26,7 @@ MLflow.
 ## Why not
 
 * **Postgres as the offline store**: the history is append-only Parquet already, and
-  DuckDB joins 280,000 entity rows against four views in about 8 s here. Postgres
+  DuckDB joins 485,000 entity rows against four views in about 8 s here. Postgres
   would add a load step and a second copy.
 * **A hand-written feature store**: the point of the repository is the failure modes
   of a real one — PIT joins, materialisation, push sources, TTL semantics — and Feast
@@ -35,5 +35,6 @@ MLflow.
 ## Consequences
 
 * The Feast Python SDK is on the request path: an online read of three views and
-  fifteen features costs a few milliseconds, which shows in the latency figures.
+  fifteen features took 0.49 ms at the median and 3.4 ms at p99 in the live run — most of
+  the scoring time.
 * A Feast upgrade can change join semantics; the merge_asof test is the tripwire.
