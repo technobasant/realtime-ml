@@ -1,0 +1,254 @@
+{
+  "environment": {
+    "python": "3.12.15",
+    "machine": "arm64",
+    "system": "Darwin",
+    "cpus": "10",
+    "cpu": "Apple M5"
+  },
+  "seed": 7,
+  "test_rows": 136621,
+  "test_frauds": 1145,
+  "v1": {
+    "n": 136621.0,
+    "frauds": 1145.0,
+    "auc_pr": 0.6128,
+    "auc_roc": 0.9755,
+    "recall_at_p80": 0.4157,
+    "threshold": 0.069,
+    "precision": 0.3901,
+    "recall": 0.7039,
+    "flag_rate": 0.0151,
+    "cost_per_1k": 207.8228,
+    "cost_saved_vs_approve_all": 0.6647,
+    "brier": 0.0049,
+    "ece": 0.0022,
+    "threshold_if_tuned_on_test": 0.0713,
+    "best_iteration": 182,
+    "train_seconds": 1.35,
+    "recall_by_type": {
+      "account_takeover": 0.789,
+      "card_testing": 0.681,
+      "lone_anomaly": 0.602
+    },
+    "reliability": [
+      {
+        "bin": 0,
+        "n": 13663,
+        "mean_score": 0.00031,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 1,
+        "n": 13662,
+        "mean_score": 0.00042,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 2,
+        "n": 13662,
+        "mean_score": 0.00051,
+        "fraud_rate": 0.00015
+      },
+      {
+        "bin": 3,
+        "n": 13662,
+        "mean_score": 0.00062,
+        "fraud_rate": 7e-05
+      },
+      {
+        "bin": 4,
+        "n": 13662,
+        "mean_score": 0.00075,
+        "fraud_rate": 7e-05
+      },
+      {
+        "bin": 5,
+        "n": 13662,
+        "mean_score": 0.00095,
+        "fraud_rate": 0.00022
+      },
+      {
+        "bin": 6,
+        "n": 13662,
+        "mean_score": 0.0013,
+        "fraud_rate": 0.00037
+      },
+      {
+        "bin": 7,
+        "n": 13662,
+        "mean_score": 0.002,
+        "fraud_rate": 0.00198
+      },
+      {
+        "bin": 8,
+        "n": 13662,
+        "mean_score": 0.00402,
+        "fraud_rate": 0.00329
+      },
+      {
+        "bin": 9,
+        "n": 13662,
+        "mean_score": 0.06032,
+        "fraud_rate": 0.07766
+      }
+    ],
+    "top_decile_reliability": [
+      {
+        "bin": 0,
+        "n": 274,
+        "mean_score": 0.1563,
+        "fraud_rate": 0.2117
+      },
+      {
+        "bin": 1,
+        "n": 273,
+        "mean_score": 0.2281,
+        "fraud_rate": 0.2711
+      },
+      {
+        "bin": 2,
+        "n": 273,
+        "mean_score": 0.3419,
+        "fraud_rate": 0.4689
+      },
+      {
+        "bin": 3,
+        "n": 273,
+        "mean_score": 0.5204,
+        "fraud_rate": 0.7033
+      },
+      {
+        "bin": 4,
+        "n": 274,
+        "mean_score": 0.7793,
+        "fraud_rate": 0.938
+      }
+    ]
+  },
+  "v2": {
+    "n": 136621.0,
+    "frauds": 1145.0,
+    "auc_pr": 0.9414,
+    "auc_roc": 0.9973,
+    "recall_at_p80": 0.9118,
+    "threshold": 0.0419,
+    "precision": 0.6679,
+    "recall": 0.9537,
+    "flag_rate": 0.012,
+    "cost_per_1k": 108.553,
+    "cost_saved_vs_approve_all": 0.8249,
+    "brier": 0.0018,
+    "ece": 0.0021,
+    "threshold_if_tuned_on_test": 0.0374,
+    "best_iteration": 164,
+    "train_seconds": 1.44,
+    "recall_by_type": {
+      "account_takeover": 0.975,
+      "card_testing": 0.99,
+      "lone_anomaly": 0.764
+    },
+    "reliability": [
+      {
+        "bin": 0,
+        "n": 13663,
+        "mean_score": 0.00023,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 1,
+        "n": 13662,
+        "mean_score": 0.0003,
+        "fraud_rate": 7e-05
+      },
+      {
+        "bin": 2,
+        "n": 13662,
+        "mean_score": 0.00035,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 3,
+        "n": 13662,
+        "mean_score": 0.0004,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 4,
+        "n": 13662,
+        "mean_score": 0.00045,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 5,
+        "n": 13662,
+        "mean_score": 0.00051,
+        "fraud_rate": 7e-05
+      },
+      {
+        "bin": 6,
+        "n": 13662,
+        "mean_score": 0.00058,
+        "fraud_rate": 0.0
+      },
+      {
+        "bin": 7,
+        "n": 13662,
+        "mean_score": 0.0007,
+        "fraud_rate": 7e-05
+      },
+      {
+        "bin": 8,
+        "n": 13662,
+        "mean_score": 0.00094,
+        "fraud_rate": 0.00015
+      },
+      {
+        "bin": 9,
+        "n": 13662,
+        "mean_score": 0.06618,
+        "fraud_rate": 0.08344
+      }
+    ],
+    "top_decile_reliability": [
+      {
+        "bin": 0,
+        "n": 274,
+        "mean_score": 0.1509,
+        "fraud_rate": 0.2701
+      },
+      {
+        "bin": 1,
+        "n": 273,
+        "mean_score": 0.4218,
+        "fraud_rate": 0.6667
+      },
+      {
+        "bin": 2,
+        "n": 273,
+        "mean_score": 0.7426,
+        "fraud_rate": 0.9304
+      },
+      {
+        "bin": 3,
+        "n": 273,
+        "mean_score": 0.8471,
+        "fraud_rate": 0.9927
+      },
+      {
+        "bin": 4,
+        "n": 274,
+        "mean_score": 0.9115,
+        "fraud_rate": 1.0
+      }
+    ]
+  },
+  "rule": {
+    "description": "amount > 4x the 7-day mean on a new device, or 3+ cards on a device within an hour",
+    "precision": 0.933,
+    "recall": 0.365,
+    "flag_rate": 0.0033,
+    "cost_saved_vs_approve_all": 0.207
+  },
+  "wall_seconds": 17.2
+}

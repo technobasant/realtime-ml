@@ -5,7 +5,6 @@ from __future__ import annotations
 import contextlib
 import json
 import math
-import time
 from dataclasses import asdict
 from typing import Any
 
@@ -15,7 +14,7 @@ import psycopg
 
 from rtml.config import DATA, MLFLOW_TRACKING_URI, MODEL_NAME, PG_DSN
 from rtml.dataset import labels_as_of, pit_join
-from rtml.gate import Decision, Scored, decide
+from rtml.gate import Decision, Scored, benchmark_ms, decide
 from rtml.store import FEATURE_REFS, get_store
 
 STORED = [r.split(":")[1] for r in FEATURE_REFS]
@@ -96,13 +95,7 @@ def run_live_gate(label_delay_days: float, latency_budget_ms: float, apply: bool
 
 def benchmark(version: str, recs: list[dict[str, Any]]) -> np.ndarray:
     """Score logged requests one at a time on the serving path (``Model.score_one``)."""
-    m = load_version(version)
-    out = []
-    for rec in recs * 2:
-        t0 = time.perf_counter()
-        m.score_one(rec)
-        out.append((time.perf_counter() - t0) * 1000)
-    return np.asarray(out[len(recs) // 4 :])  # drop warm-up
+    return benchmark_ms(load_version(version).score_one, recs)
 
 
 def load_version(version: str) -> Any:

@@ -1,7 +1,7 @@
 """The end-to-end run behind ``make demo``, recorded to ``results/live.json``.
 
-1. Replay the start of the shadow day at three request rates; the champion (v1) answers,
-   the challenger (v2) is scored in shadow. Latency per level.
+1. Replay the start of the shadow day: a warm-up, then three request rates; the champion
+   (v1) answers, the challenger (v2) is scored in shadow. Latency per level.
 2. End-to-end parity: the features the API served against a point-in-time join.
 3. Gate v2 against v1 on the shadow log with matured labels; promote if it passes.
 4. Register an equal challenger (v2 retrained with another seed) and replay into the
@@ -34,6 +34,9 @@ from rtml.train import Spec, fit, pit_frames, register
 
 API = os.environ.get("RTML_API", "http://localhost:8800")
 PROM = os.environ.get("RTML_PROMETHEUS", "http://localhost:9095")
+# 500 requests first, reported separately: the first minute of a fresh stack includes the
+# processor's consumer-group join and every first-time connection and cache fill.
+WARMUP = Level(25, 500)
 LEVELS = [Level(25, 2000), Level(50, 3000), Level(100, 4000)]
 
 
@@ -114,8 +117,8 @@ def main() -> None:
     first = max_id()
 
     # 1. latency at three request rates, shadow scoring on
-    levels, offset = asyncio.run(replay(tx, LEVELS, API, start))
-    out["latency"] = levels
+    levels, offset = asyncio.run(replay(tx, [WARMUP, *LEVELS], API, start))
+    out["warmup"], out["latency"] = levels[0], levels[1:]
     time.sleep(5)
 
     # 2. end-to-end parity of served features

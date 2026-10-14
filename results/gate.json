@@ -1,0 +1,247 @@
+{
+  "environment": {
+    "python": "3.12.15",
+    "machine": "arm64",
+    "system": "Darwin",
+    "cpus": "10",
+    "cpu": "Apple M5"
+  },
+  "seed": 7,
+  "shadow_days": [
+    77,
+    83
+  ],
+  "labels": "chargebacks known 30 days after the shadow window",
+  "budget_ms": 2.0,
+  "champion_p99_ms": 0.03,
+  "decisions": [
+    {
+      "challenger": "v2: adds device features",
+      "best_iteration": 164,
+      "promote": true,
+      "reason": "promote: saves 0.1094/txn (95% CI 0.0854 to 0.1370, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.2081,
+        0.0987
+      ],
+      "saving_per_txn": 0.1094,
+      "ci": [
+        0.0854,
+        0.137
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 6.92e-52,
+      "improved_regressed": [
+        703,
+        245
+      ],
+      "challenger_p99_ms": 0.03
+    },
+    {
+      "challenger": "v1 retrained, another seed",
+      "best_iteration": 142,
+      "promote": false,
+      "reason": "refuse: cost not significantly lower (saves +0.0035/txn, p=0.346)",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.2081,
+        0.2045
+      ],
+      "saving_per_txn": 0.0035,
+      "ci": [
+        -0.0029,
+        0.011
+      ],
+      "p_cost": 0.346,
+      "p_mcnemar": 0.182,
+      "improved_regressed": [
+        102,
+        123
+      ],
+      "challenger_p99_ms": 0.1
+    },
+    {
+      "challenger": "v1 underfit: 4 leaves, 30 rounds",
+      "best_iteration": 30,
+      "promote": false,
+      "reason": "refuse: cost significantly higher (0.0893/txn more, p<0.001)",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.2081,
+        0.2973
+      ],
+      "saving_per_txn": -0.0893,
+      "ci": [
+        -0.1294,
+        -0.0571
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 0.404,
+      "improved_regressed": [
+        327,
+        305
+      ],
+      "challenger_p99_ms": 0.02
+    },
+    {
+      "challenger": "v2 oversized: 255 leaves, 2000 rounds, no early stop",
+      "best_iteration": 2000,
+      "promote": true,
+      "reason": "promote: saves 0.1047/txn (95% CI 0.0746 to 0.1371, p<0.001), p99 0.74 ms",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.2081,
+        0.1034
+      ],
+      "saving_per_txn": 0.1047,
+      "ci": [
+        0.0746,
+        0.1371
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 1.35e-70,
+      "improved_regressed": [
+        718,
+        196
+      ],
+      "challenger_p99_ms": 0.74
+    },
+    {
+      "challenger": "v2 oversized: 255 leaves, 2000 rounds, no early stop, against v2 as champion",
+      "best_iteration": 2000,
+      "promote": false,
+      "reason": "refuse: cost not significantly lower (saves -0.0047/txn, p=0.636)",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.0987,
+        0.1034
+      ],
+      "saving_per_txn": -0.0047,
+      "ci": [
+        -0.0202,
+        0.0061
+      ],
+      "p_cost": 0.636,
+      "p_mcnemar": 1.45e-07,
+      "improved_regressed": [
+        106,
+        42
+      ],
+      "challenger_p99_ms": 0.74
+    }
+  ],
+  "v2_decided_early": [
+    {
+      "days_after_shadow": 0,
+      "promote": true,
+      "reason": "promote: saves 0.0400/txn (95% CI 0.0272 to 0.0537, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 113,
+      "cost_per_txn": [
+        0.1097,
+        0.0697
+      ],
+      "saving_per_txn": 0.04,
+      "ci": [
+        0.0272,
+        0.0537
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 4.51e-17,
+      "improved_regressed": [
+        603,
+        345
+      ],
+      "challenger_p99_ms": 0.03
+    },
+    {
+      "days_after_shadow": 3,
+      "promote": true,
+      "reason": "promote: saves 0.0636/txn (95% CI 0.0445 to 0.0876, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 210,
+      "cost_per_txn": [
+        0.1405,
+        0.0769
+      ],
+      "saving_per_txn": 0.0636,
+      "ci": [
+        0.0445,
+        0.0876
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 8.25e-24,
+      "improved_regressed": [
+        628,
+        320
+      ],
+      "challenger_p99_ms": 0.03
+    },
+    {
+      "days_after_shadow": 7,
+      "promote": true,
+      "reason": "promote: saves 0.0868/txn (95% CI 0.0644 to 0.1144, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 334,
+      "cost_per_txn": [
+        0.1737,
+        0.0869
+      ],
+      "saving_per_txn": 0.0868,
+      "ci": [
+        0.0644,
+        0.1144
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 1.68e-36,
+      "improved_regressed": [
+        666,
+        282
+      ],
+      "challenger_p99_ms": 0.03
+    },
+    {
+      "days_after_shadow": 14,
+      "promote": true,
+      "reason": "promote: saves 0.1022/txn (95% CI 0.0787 to 0.1315, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 433,
+      "cost_per_txn": [
+        0.1982,
+        0.096
+      ],
+      "saving_per_txn": 0.1022,
+      "ci": [
+        0.0787,
+        0.1315
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 5.5e-47,
+      "improved_regressed": [
+        692,
+        256
+      ],
+      "challenger_p99_ms": 0.03
+    },
+    {
+      "days_after_shadow": 30,
+      "promote": true,
+      "reason": "promote: saves 0.1094/txn (95% CI 0.0854 to 0.1370, p<0.001), p99 0.03 ms",
+      "frauds_labelled": 474,
+      "cost_per_txn": [
+        0.2081,
+        0.0987
+      ],
+      "saving_per_txn": 0.1094,
+      "ci": [
+        0.0854,
+        0.137
+      ],
+      "p_cost": 0.0,
+      "p_mcnemar": 6.92e-52,
+      "improved_regressed": [
+        703,
+        245
+      ],
+      "challenger_p99_ms": 0.03
+    }
+  ],
+  "wall_seconds": 99.3
+}

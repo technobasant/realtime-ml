@@ -1,0 +1,101 @@
+{
+  "environment": {
+    "python": "3.12.15",
+    "machine": "arm64",
+    "system": "Darwin",
+    "cpus": "10",
+    "cpu": "Apple M5"
+  },
+  "seed": 7,
+  "train_rows_with_future_features": {
+    "customer_velocity": 1.0,
+    "device_velocity": 0.98
+  },
+  "rows": [
+    {
+      "features": "v1",
+      "join": "point-in-time",
+      "valid_auc_pr_reported": 0.412,
+      "valid_auc_pr_true_labels": 0.559,
+      "valid_recall_at_p80": 0.031,
+      "test": {
+        "auc_pr": 0.613,
+        "recall_at_p80": 0.416,
+        "precision": 0.39,
+        "recall": 0.704,
+        "flag_rate": 0.015,
+        "cost_saved_vs_approve_all": 0.665
+      },
+      "top_features": [
+        "is_foreign (23%)",
+        "amount_to_cust_mean_7d (21%)",
+        "category_code (17%)",
+        "amount_log (9%)"
+      ]
+    },
+    {
+      "features": "v1",
+      "join": "naive",
+      "valid_auc_pr_reported": 0.551,
+      "valid_auc_pr_true_labels": 0.601,
+      "valid_recall_at_p80": 0.277,
+      "test": {
+        "auc_pr": 0.18,
+        "recall_at_p80": 0.058,
+        "precision": 0.269,
+        "recall": 0.247,
+        "flag_rate": 0.008,
+        "cost_saved_vs_approve_all": 0.202
+      },
+      "top_features": [
+        "cust_chargebacks_90d (36%)",
+        "amount_to_cust_mean_7d (19%)",
+        "category_code (14%)",
+        "is_foreign (12%)"
+      ]
+    },
+    {
+      "features": "v2",
+      "join": "point-in-time",
+      "valid_auc_pr_reported": 0.681,
+      "valid_auc_pr_true_labels": 0.937,
+      "valid_recall_at_p80": 0.362,
+      "test": {
+        "auc_pr": 0.941,
+        "recall_at_p80": 0.912,
+        "precision": 0.668,
+        "recall": 0.954,
+        "flag_rate": 0.012,
+        "cost_saved_vs_approve_all": 0.825
+      },
+      "top_features": [
+        "cd_txn_count_30d (32%)",
+        "dev_distinct_customers_24h (30%)",
+        "amount_to_cust_mean_7d (8%)",
+        "category_code (5%)"
+      ]
+    },
+    {
+      "features": "v2",
+      "join": "naive",
+      "valid_auc_pr_reported": 0.746,
+      "valid_auc_pr_true_labels": 0.852,
+      "valid_recall_at_p80": 0.779,
+      "test": {
+        "auc_pr": 0.363,
+        "recall_at_p80": 0.334,
+        "precision": 0.448,
+        "recall": 0.366,
+        "flag_rate": 0.007,
+        "cost_saved_vs_approve_all": 0.35
+      },
+      "top_features": [
+        "dev_txn_count_1h (41%)",
+        "cd_txn_count_30d (21%)",
+        "cust_chargebacks_90d (17%)",
+        "is_foreign (7%)"
+      ]
+    }
+  ],
+  "wall_seconds": 20.9
+}

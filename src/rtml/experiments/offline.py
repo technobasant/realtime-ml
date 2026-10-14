@@ -22,7 +22,7 @@ from rtml.dataset import day_slice, day_ts, labels_as_of, load, load_tables, nai
 from rtml.experiments.common import dataset, r, save
 from rtml.features.defs import CUSTOMER_DEVICE, CUSTOMER_VELOCITY, DEVICE_VELOCITY, model_matrix
 from rtml.features.online import OnlineFeatures, txns_from_frame
-from rtml.gate import LATENCY_BUDGET_MS, Scored, decide
+from rtml.gate import LATENCY_BUDGET_MS, Scored, benchmark_ms, decide
 from rtml.metrics import best_threshold, quality, reliability
 from rtml.store import get_store
 from rtml.train import Spec, Trained, evaluate, fit
@@ -257,16 +257,11 @@ def skew(seed: int = 7, days: tuple[int, int] = (63, 69)) -> dict[str, Any]:
 # --------------------------------------------------------------------------- gate
 
 
-def _latency(m: Trained, rows: pd.DataFrame, n: int = 400) -> np.ndarray:
+def _latency(m: Trained, rows: pd.DataFrame, n: int = 500) -> np.ndarray:
     """Single-transaction scoring latency on the serving path: request features plus predict."""
     sample = rows.sample(n=min(n, len(rows)), random_state=0)
     recs = [{str(k): v for k, v in r.items()} for r in sample.to_dict(orient="records")]
-    out = []
-    for rec in recs:
-        t0 = time.perf_counter()
-        m.score_one(rec)
-        out.append((time.perf_counter() - t0) * 1000)
-    return np.asarray(out[20:])  # drop warm-up
+    return benchmark_ms(m.score_one, recs)
 
 
 def gate(seed: int = 7, budget_ms: float = LATENCY_BUDGET_MS) -> dict[str, Any]:
@@ -322,6 +317,17 @@ def gate(seed: int = 7, budget_ms: float = LATENCY_BUDGET_MS) -> dict[str, Any]:
             v2 = s
         dec = decide(base, s, y, amount, latency_budget_ms=budget_ms)
         out["decisions"].append({"challenger": name, "best_iteration": m.booster.best_iteration, **_dec(dec)})
+        if name.startswith("v2 oversized") and v2 is not None:
+            # The gate compares a challenger with the champion it would replace, not with
+            # other candidates: against v2 as champion the oversized model has nothing to offer.
+            dec = decide(v2, s, y, amount, latency_budget_ms=budget_ms)
+            out["decisions"].append(
+                {
+                    "challenger": f"{name}, against v2 as champion",
+                    "best_iteration": m.booster.best_iteration,
+                    **_dec(dec),
+                }
+            )
 
     # The same better challenger, decided early: labels that have not arrived count as legit.
     assert v2 is not None

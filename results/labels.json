@@ -1,0 +1,113 @@
+{
+  "environment": {
+    "python": "3.12.15",
+    "machine": "arm64",
+    "system": "Darwin",
+    "cpus": "10",
+    "cpu": "Apple M5"
+  },
+  "seed": 7,
+  "variants": [
+    {
+      "variant": "all rows to day 62, labels known on day 63",
+      "train_rows": 407737,
+      "frauds_labelled": 2644,
+      "frauds_true": 3782,
+      "valid_auc_pr_reported": 0.158,
+      "test": {
+        "auc_pr": 0.93,
+        "recall_at_p80": 0.887,
+        "precision": 0.893,
+        "recall": 0.812,
+        "flag_rate": 0.008,
+        "cost_saved_vs_approve_all": 0.707
+      }
+    },
+    {
+      "variant": "rows matured 14 days (default)",
+      "train_rows": 281430,
+      "frauds_labelled": 2318,
+      "frauds_true": 2801,
+      "valid_auc_pr_reported": 0.681,
+      "test": {
+        "auc_pr": 0.941,
+        "recall_at_p80": 0.912,
+        "precision": 0.668,
+        "recall": 0.954,
+        "flag_rate": 0.012,
+        "cost_saved_vs_approve_all": 0.825
+      }
+    },
+    {
+      "variant": "rows matured 30 days",
+      "train_rows": 126348,
+      "frauds_labelled": 1359,
+      "frauds_true": 1603,
+      "valid_auc_pr_reported": 0.728,
+      "test": {
+        "auc_pr": 0.937,
+        "recall_at_p80": 0.892,
+        "precision": 0.576,
+        "recall": 0.961,
+        "flag_rate": 0.014,
+        "cost_saved_vs_approve_all": 0.814
+      }
+    },
+    {
+      "variant": "all rows to day 62, true labels (simulation only)",
+      "train_rows": 407737,
+      "frauds_labelled": 3782,
+      "frauds_true": 3782,
+      "valid_auc_pr_reported": 0.958,
+      "test": {
+        "auc_pr": 0.957,
+        "recall_at_p80": 0.932,
+        "precision": 0.684,
+        "recall": 0.959,
+        "flag_rate": 0.012,
+        "cost_saved_vs_approve_all": 0.84
+      }
+    }
+  ],
+  "day": 63,
+  "true_recall": 0.93,
+  "label_curve": [
+    {
+      "days_after": 1,
+      "frauds_known": 0,
+      "share_of_true_frauds": 0.0,
+      "measured_recall": null
+    },
+    {
+      "days_after": 3,
+      "frauds_known": 7,
+      "share_of_true_frauds": 0.099,
+      "measured_recall": 0.857
+    },
+    {
+      "days_after": 7,
+      "frauds_known": 37,
+      "share_of_true_frauds": 0.521,
+      "measured_recall": 0.865
+    },
+    {
+      "days_after": 14,
+      "frauds_known": 53,
+      "share_of_true_frauds": 0.746,
+      "measured_recall": 0.906
+    },
+    {
+      "days_after": 30,
+      "frauds_known": 62,
+      "share_of_true_frauds": 0.873,
+      "measured_recall": 0.919
+    },
+    {
+      "days_after": 60,
+      "frauds_known": 63,
+      "share_of_true_frauds": 0.887,
+      "measured_recall": 0.905
+    }
+  ],
+  "wall_seconds": 54.3
+}

@@ -16,10 +16,14 @@ Anything else keeps the champion. "Not significantly different" is a refusal, no
 from __future__ import annotations
 
 import argparse
+import gc
 import hashlib
 import json
+import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 import numpy as np
 from evalproof import __version__ as evalproof_version
@@ -66,6 +70,29 @@ class Decision:
     regressed: int
     challenger_p99_ms: float
     latency_budget_ms: float
+
+
+def benchmark_ms(score: Callable[[dict[str, Any]], float], recs: list[dict[str, Any]], n: int = 3000) -> FloatArray:
+    """Per-call latency of ``score`` over logged requests, one at a time.
+
+    The p99 of a few hundred calls was dominated by whatever else the machine was doing
+    (one run put a model with a 0.04 ms median at 2.8 ms). So: a warm-up, a full
+    collection, the collector paused while timing, and 3,000 calls.
+    """
+    for rec in recs[:200]:
+        score(rec)
+    gc.collect()
+    gc.disable()
+    try:
+        out = np.empty(n, dtype=np.float64)
+        for i in range(n):
+            rec = recs[i % len(recs)]
+            t0 = time.perf_counter()
+            score(rec)
+            out[i] = (time.perf_counter() - t0) * 1000
+    finally:
+        gc.enable()
+    return out
 
 
 def to_run(m: Scored, y: FloatArray, amount: FloatArray, dataset_hash: str, review_cost: float = REVIEW_COST) -> Run:
