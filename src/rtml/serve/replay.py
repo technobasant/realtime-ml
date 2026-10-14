@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import queue
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any, cast
@@ -26,6 +28,35 @@ from confluent_kafka import Producer
 from rtml.config import KAFKA_BOOTSTRAP, TXN_TOPIC
 from rtml.dataset import RAW_COLS
 from rtml.store import get_store
+
+
+class Publisher:
+    """Produces to Kafka from its own thread, in the order transactions were scored.
+
+    Calling the Kafka producer from the replay's event loop put up to a second of
+    stalls into the *client's* latency figures (p99 826 ms against 57 ms without it)
+    while the server's own timings did not move: the first numbers measured the load
+    generator.
+    """
+
+    def __init__(self) -> None:
+        self.q: queue.Queue[dict[str, Any] | None] = queue.Queue()
+        self.producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP, "linger.ms": 5})
+        self.thread = threading.Thread(target=self._run, daemon=True, name="publisher")
+        self.thread.start()
+
+    def _run(self) -> None:
+        while (rec := self.q.get()) is not None:
+            self.producer.produce(TXN_TOPIC, key=rec["customer_id"], value=json.dumps(rec))
+            self.producer.poll(0)
+        self.producer.flush(30)
+
+    def put(self, rec: dict[str, Any]) -> None:
+        self.q.put(rec)
+
+    def close(self) -> None:
+        self.q.put(None)
+        self.thread.join()
 
 
 @dataclass
@@ -51,7 +82,7 @@ def materialize_profile(day_start: pd.Timestamp) -> float:
 
 
 async def _run_level(
-    client: httpx.AsyncClient, producer: Producer, rows: list[dict[str, Any]], rps: float, api: str
+    client: httpx.AsyncClient, publisher: Publisher, rows: list[dict[str, Any]], rps: float, api: str
 ) -> dict[str, Any]:
     results: list[tuple[str, float, float, int]] = []
     sem = asyncio.Semaphore(256)
@@ -66,8 +97,7 @@ async def _run_level(
             except httpx.HTTPError:
                 status, server_ms = 0, np.nan
             client_ms = (time.perf_counter() - t0) * 1000
-            producer.produce(TXN_TOPIC, key=rec["customer_id"], value=json.dumps(rec))
-            producer.poll(0)
+            publisher.put(rec)  # authorise, then publish
             results.append((rec["txn_id"], client_ms, server_ms, status))
 
     started_at = time.time()
@@ -80,7 +110,6 @@ async def _run_level(
         tasks.append(asyncio.create_task(one(rec)))
     await asyncio.gather(*tasks)
     wall = time.perf_counter() - start
-    producer.flush(10)
     ok = [x for x in results if x[3] == 200]
     client_ms = np.array([x[1] for x in ok])
     server_ms = np.array([x[2] for x in ok])
@@ -109,7 +138,7 @@ async def replay(
 ) -> tuple[list[dict[str, Any]], int]:
     """Replay ``tx`` from ``start``; returns per-level results and the next offset."""
     rows = cast(list[dict[str, Any]], tx[tx.ts >= start].sort_values("ts").to_dict(orient="records"))
-    producer = Producer({"bootstrap.servers": KAFKA_BOOTSTRAP, "linger.ms": 1})
+    publisher = Publisher()
     out = []
     current_day = pd.Timestamp(rows[offset]["ts"]).normalize()
     async with httpx.AsyncClient(timeout=10.0, limits=httpx.Limits(max_connections=64)) as client:
@@ -129,10 +158,11 @@ async def replay(
                     await asyncio.sleep(1.0)  # let the stream catch up before the batch job runs
                     materialize_profile(pd.Timestamp(part[0]["ts"]).normalize())
                 if part:
-                    level_parts.append(await _run_level(client, producer, [record(r) for r in part], lv.rps, api))
+                    level_parts.append(await _run_level(client, publisher, [record(r) for r in part], lv.rps, api))
             out.append(_merge(level_parts) if len(level_parts) > 1 else level_parts[0])
             offset += lv.n
             await asyncio.sleep(2.0)
+    publisher.close()
     return out, offset
 
 

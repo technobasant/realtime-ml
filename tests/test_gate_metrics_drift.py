@@ -80,3 +80,18 @@ def test_labels_as_of_hides_chargebacks_that_have_not_arrived() -> None:
     t0 = pd.Timestamp("2026-07-10", tz="UTC")
     rows = pd.DataFrame({"chargeback_at": [t0 - pd.Timedelta(days=1), t0 + pd.Timedelta(days=1), pd.NaT]})
     assert labels_as_of(rows, t0).tolist() == [1, 0, 0]
+
+
+def test_hour_matched_psi_ignores_the_daily_cycle_but_not_a_shift() -> None:
+    from rtml.monitor.drift import edges, hourly_reference, psi_hour_matched
+
+    rng = np.random.default_rng(1)
+    hours = rng.integers(0, 24, 50_000).astype(np.float64)
+    ref = rng.normal(hours / 6.0, 1.0)  # a feature with a strong daily cycle
+    cuts = edges(ref)
+    hourly = hourly_reference(ref, hours, cuts)
+    evening = rng.integers(18, 24, 3000).astype(np.float64)
+    same = rng.normal(evening / 6.0, 1.0)
+    assert psi(ref, same, cuts=cuts) > 0.5  # unweighted: the evening looks like drift
+    assert psi_hour_matched(hourly, same, evening, cuts) < 0.03
+    assert psi_hour_matched(hourly, same + 0.8, evening, cuts) > 0.2

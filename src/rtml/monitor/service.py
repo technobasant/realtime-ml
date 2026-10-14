@@ -2,8 +2,9 @@
 
 Every ``--every`` seconds it takes the champion's last ``--window`` scored transactions,
 rebuilds the model features from what was logged, and compares them with the training
-validation window: PSI and KS per feature, PSI on the score, the flag rate as a z-score,
-and recall on the transactions whose chargebacks have arrived. Prometheus evaluates the
+validation window: PSI per feature (against the reference re-weighted to the window's
+hours of day, and unweighted for comparison), KS per feature, PSI on the score, the flag
+rate as a z-score, and recall on the transactions whose chargebacks have arrived. Prometheus evaluates the
 alert rules in ``ops/prometheus/alerts.yml`` against these gauges.
 
 The window is a count of transactions, not a span of time, so a replay that compresses a
@@ -26,13 +27,14 @@ from rtml import timeline as tl
 from rtml.config import DATA, PG_DSN
 from rtml.dataset import day_slice, labels_as_of, load, pit_join
 from rtml.features.defs import MODEL_FEATURES_V2, model_matrix
-from rtml.monitor.drift import edges, flag_rate_z, kind, ks, psi
+from rtml.monitor.drift import edges, flag_rate_z, hourly_reference, kind, ks, psi, psi_hour_matched
 from rtml.serve.models import Registry
 from rtml.store import get_store
 
 log = logging.getLogger("rtml.monitor")
 
-PSI = Gauge("rtml_feature_psi", "PSI of a feature against the reference window", ["feature", "kind"])
+PSI = Gauge("rtml_feature_psi", "PSI against the reference re-weighted to the window's hours", ["feature", "kind"])
+RAW_PSI = Gauge("rtml_feature_psi_unmatched", "PSI against the whole-day reference", ["feature"])
 KS = Gauge("rtml_feature_ks", "KS statistic of a feature against the reference window", ["feature"])
 SCORE_PSI = Gauge("rtml_score_psi", "PSI of the champion's score against the reference window")
 FLAG_RATE = Gauge("rtml_flag_rate", "Share of the window flagged by the champion")
@@ -53,6 +55,8 @@ def run(window: int, every: float, port: int) -> None:
     ref = reference()
     ref_x = model_matrix(ref, MODEL_FEATURES_V2)
     cuts = {f: edges(ref_x[f].to_numpy()) for f in MODEL_FEATURES_V2}
+    ref_hours = ref_x["hour_of_day"].to_numpy()
+    hourly = {f: hourly_reference(ref_x[f].to_numpy(), ref_hours, cuts[f]) for f in MODEL_FEATURES_V2}
     tx, _ = load(DATA)
     labels = tx.set_index("txn_id")[["chargeback_at"]]
     registry = Registry()
@@ -74,8 +78,10 @@ def run(window: int, every: float, port: int) -> None:
         if len(rows) >= 500:
             feats = pd.DataFrame([r[3] if isinstance(r[3], dict) else json.loads(r[3]) for r in rows])
             x = model_matrix(feats, MODEL_FEATURES_V2)
+            hours = x["hour_of_day"].to_numpy()
             for f in MODEL_FEATURES_V2:
-                PSI.labels(f, kind(f)).set(psi(ref_x[f].to_numpy(), x[f].to_numpy(), cuts=cuts[f]))
+                PSI.labels(f, kind(f)).set(psi_hour_matched(hourly[f], x[f].to_numpy(), hours, cuts[f]))
+                RAW_PSI.labels(f).set(psi(ref_x[f].to_numpy(), x[f].to_numpy(), cuts=cuts[f]))
                 KS.labels(f).set(ks(ref_x[f].to_numpy(), x[f].to_numpy()))
             scores = np.array([r[1] for r in rows], dtype=np.float64)
             flagged = np.array([r[2] for r in rows], dtype=bool)

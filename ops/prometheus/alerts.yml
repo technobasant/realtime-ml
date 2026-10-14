@@ -1,9 +1,9 @@
 groups:
   - name: realtime-ml
     rules:
-      # Behavioural features only. Calendar trends (account age, the 90-day chargeback
-      # count) fire against a fixed reference whether or not anything changed, and the
-      # hour of day differs from a whole-day reference in any window shorter than a day.
+      # Behavioural features only, PSI against the reference re-weighted to the window's
+      # hours of day. Calendar trends (account age, the 90-day chargeback count) fire
+      # against a fixed reference whether or not anything changed.
       - alert: FeatureDrift
         expr: max(rtml_feature_psi{kind="behavioural"}) > 0.2
         for: 15s

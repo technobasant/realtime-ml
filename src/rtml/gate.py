@@ -121,16 +121,22 @@ def decide(
     acc: MetricComparison = cmp.metrics["correct"]
     p99 = float(np.percentile(challenger.latency_ms, 99))
 
+    def fmt(p: float) -> str:
+        # a bootstrap p-value of 0 means "below the resolution of n_boot replicates"
+        return f"p<{1 / n_boot:.3g}" if p == 0 else f"p={p:.3g}"
+
     reasons = []
-    if not (cost.delta > 0 and cost.p_value < alpha):
-        reasons.append(f"cost not significantly lower (saves {cost.delta:+.4f}/txn, p={cost.p_value:.3g})")
+    if cost.delta < 0 and cost.p_value < alpha:
+        reasons.append(f"cost significantly higher ({-cost.delta:.4f}/txn more, {fmt(cost.p_value)})")
+    elif not (cost.delta > 0 and cost.p_value < alpha):
+        reasons.append(f"cost not significantly lower (saves {cost.delta:+.4f}/txn, {fmt(cost.p_value)})")
     if acc.delta < 0 and acc.p_value < alpha:
-        reasons.append(f"decisions significantly worse (McNemar p={acc.p_value:.3g})")
+        reasons.append(f"decisions significantly worse (McNemar {fmt(acc.p_value)})")
     if p99 > latency_budget_ms:
         reasons.append(f"p99 {p99:.2f} ms over the {latency_budget_ms:.1f} ms budget")
     promote = not reasons
     reason = (
-        f"promote: saves {cost.delta:.4f}/txn (95% CI {cost.ci_low:.4f} to {cost.ci_high:.4f}, p={cost.p_value:.3g}), "
+        f"promote: saves {cost.delta:.4f}/txn (95% CI {cost.ci_low:.4f} to {cost.ci_high:.4f}, {fmt(cost.p_value)}), "
         f"p99 {p99:.2f} ms"
         if promote
         else "refuse: " + "; ".join(reasons)

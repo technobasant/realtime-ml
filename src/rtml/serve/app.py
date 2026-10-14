@@ -11,6 +11,7 @@ requests/s was 85 ms for 4 ms of work; see the failure log in the README.
 
 from __future__ import annotations
 
+import gc
 import logging
 import math
 import os
@@ -103,6 +104,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     registry.start()
     writer.start()
     threading.Thread(target=_shadow_loop, daemon=True, name="shadow").start()
+    # Everything loaded so far (Feast, MLflow, pandas, both models) lives for the life of
+    # the process; keep the cyclic collector from walking it on every full collection.
+    gc.collect()
+    gc.freeze()
     yield
     registry.stop()
     writer.stop()

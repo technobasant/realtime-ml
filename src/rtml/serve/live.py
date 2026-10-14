@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import json
 import math
+import time
 from dataclasses import asdict
 from typing import Any
 
@@ -68,9 +69,18 @@ def run_live_gate(label_delay_days: float, latency_budget_ms: float, apply: bool
             d["model_ms"].to_numpy(np.float64),
         )
 
+    # Latency is benchmarked, not read from the shadow log: shadow timings share a process
+    # with the live path and measure its contention (p99 3.9 ms for a model whose median
+    # is 0.16 ms, and the champion's own p99 was 2.5 ms on the same server).
+    sample = _query(
+        "SELECT features FROM predictions WHERE role = 'challenger' AND version = %s ORDER BY id DESC LIMIT 500",
+        (a["challenger"],),
+    )["features"].tolist()
+    bench = benchmark(a["challenger"], [f if isinstance(f, dict) else json.loads(f) for f in sample])
+    chall_scored = scored(chall, f"v{a['challenger']}")
     dec = decide(
         scored(champ, f"v{a['champion']}"),
-        scored(chall, f"v{a['challenger']}"),
+        Scored(chall_scored.name, ids, chall_scored.scores, chall_scored.threshold, bench),
         y,
         amount,
         latency_budget_ms=latency_budget_ms,
@@ -82,6 +92,50 @@ def run_live_gate(label_delay_days: float, latency_budget_ms: float, apply: bool
         client.set_registered_model_alias(MODEL_NAME, "champion", a["challenger"])
         client.delete_registered_model_alias(MODEL_NAME, "challenger")
     return dec
+
+
+def benchmark(version: str, recs: list[dict[str, Any]]) -> np.ndarray:
+    """Score logged requests one at a time on the serving path (``Model.score_one``)."""
+    m = load_version(version)
+    out = []
+    for rec in recs * 2:
+        t0 = time.perf_counter()
+        m.score_one(rec)
+        out.append((time.perf_counter() - t0) * 1000)
+    return np.asarray(out[len(recs) // 4 :])  # drop warm-up
+
+
+def load_version(version: str) -> Any:
+    import mlflow
+    from mlflow import MlflowClient
+
+    from rtml.serve.models import Model
+
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mv = MlflowClient().get_model_version(MODEL_NAME, version)
+    return Model(
+        alias="",
+        version=version,
+        spec=mv.tags.get("spec", ""),
+        booster=mlflow.lightgbm.load_model(f"models:/{MODEL_NAME}/{version}"),
+        features=json.loads(mv.tags["features"]),
+        threshold=float(mv.tags["threshold"]),
+    )
+
+
+def shadow_latency() -> dict[str, dict[str, float]]:
+    """Per-version scoring time as logged by the API: the live path, contention included."""
+    df = _query("SELECT role, version, model_ms, fetch_ms FROM predictions")
+    out = {}
+    for (role, version), g in df.groupby(["role", "version"]):
+        out[f"{role} v{version}"] = {
+            "n": len(g),
+            "model_p50_ms": round(float(g.model_ms.median()), 3),
+            "model_p99_ms": round(float(g.model_ms.quantile(0.99)), 3),
+            "fetch_p50_ms": round(float(g.fetch_ms.median()), 3),
+            "fetch_p99_ms": round(float(g.fetch_ms.quantile(0.99)), 3),
+        }
+    return out
 
 
 def _same(a: Any, b: Any) -> bool:

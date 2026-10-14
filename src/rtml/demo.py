@@ -28,7 +28,7 @@ from rtml.config import DATA, MLFLOW_TRACKING_URI, PG_DSN, RESULTS
 from rtml.dataset import day_ts, load
 from rtml.experiments.common import environment
 from rtml.gate import LATENCY_BUDGET_MS
-from rtml.serve.live import aliases, parity, run_live_gate
+from rtml.serve.live import aliases, parity, run_live_gate, shadow_latency
 from rtml.serve.replay import Level, replay
 from rtml.train import Spec, fit, pit_frames, register
 
@@ -153,6 +153,7 @@ def main() -> None:
     d2 = run_live_gate(label_delay_days=30, latency_budget_ms=LATENCY_BUDGET_MS, apply=True)
     out["gate_equal"] = asdict(d2)
     out["models_after"] = aliases()
+    out["shadow_log_latency"] = shadow_latency()
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "live.json").write_text(json.dumps(out, indent=2, default=str))
     print(json.dumps({k: out[k] for k in ("latency", "parity", "drift")}, indent=2, default=str))
