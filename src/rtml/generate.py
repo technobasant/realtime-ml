@@ -44,6 +44,7 @@ class GenConfig:
     days: int = 60
     start: str = "2026-07-01"
     drift_day: int | None = None
+    drift_inflation: float = 1.15
     card_testing_bursts_per_day: float = 3.0
     ato_per_day: float = 8.0
     lone_anomaly_per_day: float = 12.0
@@ -213,7 +214,7 @@ def generate(cfg: GenConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     # seasonal inflation after the drift day, for everyone
     if drift_s is not None:
-        tx.loc[tx.ts_s >= drift_s, "amount"] *= 1.15
+        tx.loc[tx.ts_s >= drift_s, "amount"] *= cfg.drift_inflation
 
     tx["merchant_id"] = _merchant(rng, tx["merchant_category"].to_numpy())
     tx["amount"] = tx["amount"].round(2).clip(lower=0.5)
