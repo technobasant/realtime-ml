@@ -22,7 +22,7 @@ from rtml.dataset import day_slice, day_ts, labels_as_of, load, load_tables, nai
 from rtml.experiments.common import dataset, r, save
 from rtml.features.defs import CUSTOMER_DEVICE, CUSTOMER_VELOCITY, DEVICE_VELOCITY, model_matrix
 from rtml.features.online import OnlineFeatures, txns_from_frame
-from rtml.gate import Scored, decide
+from rtml.gate import LATENCY_BUDGET_MS, Scored, decide
 from rtml.metrics import best_threshold, quality, reliability
 from rtml.store import get_store
 from rtml.train import Spec, Trained, evaluate, fit
@@ -258,18 +258,18 @@ def skew(seed: int = 7, days: tuple[int, int] = (63, 69)) -> dict[str, Any]:
 
 
 def _latency(m: Trained, rows: pd.DataFrame, n: int = 400) -> np.ndarray:
-    """Single-transaction scoring latency in-process: request features plus predict."""
+    """Single-transaction scoring latency on the serving path: request features plus predict."""
     sample = rows.sample(n=min(n, len(rows)), random_state=0)
+    recs = [{str(k): v for k, v in r.items()} for r in sample.to_dict(orient="records")]
     out = []
-    for i in range(len(sample)):
-        one = sample.iloc[[i]]
+    for rec in recs:
         t0 = time.perf_counter()
-        m.predict(one)
+        m.score_one(rec)
         out.append((time.perf_counter() - t0) * 1000)
     return np.asarray(out[20:])  # drop warm-up
 
 
-def gate(seed: int = 7, budget_ms: float = 10.0) -> dict[str, Any]:
+def gate(seed: int = 7, budget_ms: float = LATENCY_BUDGET_MS) -> dict[str, Any]:
     d = dataset(seed)
     _, cfg = load(d)
     train, valid, shadow = _frames(d, tl.TRAIN, tl.VALID, tl.SHADOW)

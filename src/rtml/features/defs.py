@@ -16,6 +16,11 @@ stale they are.
 
 from __future__ import annotations
 
+import math
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -131,3 +136,49 @@ def request_features(df: pd.DataFrame) -> pd.DataFrame:
 def model_matrix(df: pd.DataFrame, features: list[str]) -> pd.DataFrame:
     """Request features plus stored features, in the column order the model was trained on."""
     return request_features(df)[features].astype("float64")
+
+
+_CATEGORY_CODE = {c: float(i) for i, c in enumerate(CATEGORIES)}
+_NULLABLE = ("cust_amount_mean_7d", "cust_last_txn_epoch", "account_age_days", "cust_chargebacks_90d")
+
+
+def _num(v: Any) -> float:
+    if v is None:
+        return math.nan
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return math.nan
+
+
+def _utc(ts: Any) -> datetime:
+    t = ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts))
+    return t.replace(tzinfo=UTC) if t.tzinfo is None else t.astimezone(UTC)
+
+
+def request_row(rec: Mapping[str, Any], features: list[str]) -> np.ndarray:
+    """``model_matrix`` for one transaction, without pandas: the serving path.
+
+    Building a one-row DataFrame costs more than the model does, and under concurrent
+    requests that cost became the latency tail. This is a second implementation of
+    ``request_features``, so a test holds the two equal on every row of a dataset.
+    """
+    v: dict[str, float] = {}
+    for c in COUNT_FEATURES:
+        x = _num(rec.get(c))
+        v[c] = 0.0 if math.isnan(x) else x
+    for c in _NULLABLE:
+        v[c] = _num(rec.get(c))
+    ts = _utc(rec["ts"])
+    amount = float(rec["amount"])
+    v["amount_log"] = math.log1p(amount)
+    v["category_code"] = _CATEGORY_CODE.get(str(rec["merchant_category"]), -1.0)
+    v["hour_of_day"] = float(ts.hour)
+    home = rec.get("home_country")
+    missing_home = home is None or (isinstance(home, float) and math.isnan(home))
+    v["is_foreign"] = math.nan if missing_home else float(rec["country"] != home)
+    mean7 = v["cust_amount_mean_7d"]
+    v["amount_to_cust_mean_7d"] = amount / mean7 if mean7 > 0 else math.nan
+    v["secs_since_last_cust_txn"] = ts.timestamp() - v["cust_last_txn_epoch"]
+    v["is_new_device"] = float(v["cd_txn_count_30d"] == 0)
+    return np.array([[v[f] for f in features]], dtype=np.float64)

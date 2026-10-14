@@ -6,14 +6,16 @@ import json
 import logging
 import threading
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 
 from rtml.config import MLFLOW_TRACKING_URI, MODEL_NAME
-from rtml.features.defs import model_matrix
+from rtml.features.defs import model_matrix, request_row
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +30,13 @@ class Model:
     threshold: float
 
     def score(self, frame: pd.DataFrame) -> np.ndarray:
-        return np.asarray(self.booster.predict(model_matrix(frame, self.features)), dtype=np.float64)
+        """Batch scoring (the monitor's reference window)."""
+        return np.asarray(self.booster.predict(model_matrix(frame, self.features), num_threads=1), dtype=np.float64)
+
+    def score_one(self, rec: Mapping[str, Any]) -> float:
+        """One transaction on the request path. One LightGBM thread: OpenMP threads per
+        request oversubscribe the CPU as soon as requests overlap."""
+        return float(self.booster.predict(request_row(rec, self.features), num_threads=1)[0])
 
 
 def load(alias: str, tracking_uri: str = MLFLOW_TRACKING_URI, name: str = MODEL_NAME) -> Model | None:

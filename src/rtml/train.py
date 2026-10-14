@@ -21,7 +21,7 @@ import pandas as pd
 from rtml import timeline as tl
 from rtml.config import DATA, MLFLOW_TRACKING_URI, MODEL_NAME
 from rtml.dataset import day_slice, day_ts, labels_as_of, load, pit_join
-from rtml.features.defs import FEATURE_SETS, model_matrix
+from rtml.features.defs import FEATURE_SETS, model_matrix, request_row
 from rtml.generate import GenConfig
 from rtml.metrics import best_threshold, quality
 from rtml.store import get_store
@@ -66,6 +66,11 @@ class Trained:
     def predict(self, frame: pd.DataFrame) -> np.ndarray:
         x = model_matrix(frame, self.features)
         return np.asarray(self.booster.predict(x, num_iteration=self.booster.best_iteration), dtype=np.float64)
+
+    def score_one(self, rec: dict[str, Any]) -> float:
+        """The serving path for one transaction (see ``rtml.serve.models.Model.score_one``)."""
+        x = request_row(rec, self.features)
+        return float(self.booster.predict(x, num_iteration=self.booster.best_iteration, num_threads=1)[0])
 
 
 def labelled(rows: pd.DataFrame, cfg: GenConfig, labels_at_day: int | None) -> np.ndarray:

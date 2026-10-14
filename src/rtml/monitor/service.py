@@ -26,13 +26,13 @@ from rtml import timeline as tl
 from rtml.config import DATA, PG_DSN
 from rtml.dataset import day_slice, labels_as_of, load, pit_join
 from rtml.features.defs import MODEL_FEATURES_V2, model_matrix
-from rtml.monitor.drift import TRENDING, edges, flag_rate_z, ks, psi
+from rtml.monitor.drift import edges, flag_rate_z, kind, ks, psi
 from rtml.serve.models import Registry
 from rtml.store import get_store
 
 log = logging.getLogger("rtml.monitor")
 
-PSI = Gauge("rtml_feature_psi", "PSI of a feature against the reference window", ["feature", "trending"])
+PSI = Gauge("rtml_feature_psi", "PSI of a feature against the reference window", ["feature", "kind"])
 KS = Gauge("rtml_feature_ks", "KS statistic of a feature against the reference window", ["feature"])
 SCORE_PSI = Gauge("rtml_score_psi", "PSI of the champion's score against the reference window")
 FLAG_RATE = Gauge("rtml_flag_rate", "Share of the window flagged by the champion")
@@ -75,7 +75,7 @@ def run(window: int, every: float, port: int) -> None:
             feats = pd.DataFrame([r[3] if isinstance(r[3], dict) else json.loads(r[3]) for r in rows])
             x = model_matrix(feats, MODEL_FEATURES_V2)
             for f in MODEL_FEATURES_V2:
-                PSI.labels(f, str(f in TRENDING).lower()).set(psi(ref_x[f].to_numpy(), x[f].to_numpy(), cuts=cuts[f]))
+                PSI.labels(f, kind(f)).set(psi(ref_x[f].to_numpy(), x[f].to_numpy(), cuts=cuts[f]))
                 KS.labels(f).set(ks(ref_x[f].to_numpy(), x[f].to_numpy()))
             scores = np.array([r[1] for r in rows], dtype=np.float64)
             flagged = np.array([r[2] for r in rows], dtype=bool)

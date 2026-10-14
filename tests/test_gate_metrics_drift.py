@@ -38,7 +38,7 @@ def test_threshold_and_recall_at_precision_on_a_separable_case() -> None:
 
 def test_gate_promotes_a_clearly_better_challenger() -> None:
     y, amount, ids = _world()
-    fast = np.full(200, 1.0)
+    fast = np.full(200, 0.5)
     champ = Scored("a", ids, _scores(y, 0.2, 1), 0.5, fast)
     chall = Scored("b", ids, _scores(y, 0.6, 2), 0.5, fast)
     d = decide(champ, chall, y, amount, n_boot=500)
@@ -49,7 +49,7 @@ def test_gate_promotes_a_clearly_better_challenger() -> None:
 def test_gate_refuses_an_equal_challenger() -> None:
     y, amount, ids = _world()
     s = _scores(y, 0.3, 1)
-    fast = np.full(200, 1.0)
+    fast = np.full(200, 0.5)
     d = decide(Scored("a", ids, s, 0.5, fast), Scored("b", ids, s.copy(), 0.5, fast), y, amount, n_boot=500)
     assert not d.promote
     assert "not significantly lower" in d.reason
@@ -57,9 +57,9 @@ def test_gate_refuses_an_equal_challenger() -> None:
 
 def test_gate_refuses_a_better_but_slow_challenger() -> None:
     y, amount, ids = _world()
-    champ = Scored("a", ids, _scores(y, 0.2, 1), 0.5, np.full(200, 1.0))
-    chall = Scored("b", ids, _scores(y, 0.6, 2), 0.5, np.full(200, 25.0))
-    d = decide(champ, chall, y, amount, latency_budget_ms=10.0, n_boot=500)
+    champ = Scored("a", ids, _scores(y, 0.2, 1), 0.5, np.full(200, 0.5))
+    chall = Scored("b", ids, _scores(y, 0.6, 2), 0.5, np.full(200, 4.0))
+    d = decide(champ, chall, y, amount, latency_budget_ms=2.0, n_boot=500)
     assert not d.promote
     assert "budget" in d.reason
 

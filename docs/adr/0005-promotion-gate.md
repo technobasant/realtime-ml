@@ -19,7 +19,8 @@ whenever the challenger's number is higher will promote noise about half the tim
 * Promote only if all three hold:
   1. the challenger's mean cost is lower with paired-bootstrap p < 0.05;
   2. its decisions are not significantly worse (McNemar);
-  3. its p99 scoring latency is within the 10 ms budget.
+  3. its p99 scoring latency — request features plus predict — is within 2 ms, the
+     model's share of a 20 ms scoring SLO.
 * evalproof's own `gate.decide` checks for regressions; promotion needs evidence of an
   improvement, so this rule is written here on top of its statistics.
 * Promotion moves the MLflow `champion` alias and removes `challenger`; the API follows

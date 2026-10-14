@@ -27,6 +27,7 @@ from rtml import timeline as tl
 from rtml.config import DATA, MLFLOW_TRACKING_URI, PG_DSN, RESULTS
 from rtml.dataset import day_ts, load
 from rtml.experiments.common import environment
+from rtml.gate import LATENCY_BUDGET_MS
 from rtml.serve.live import aliases, parity, run_live_gate
 from rtml.serve.replay import Level, replay
 from rtml.train import Spec, fit, pit_frames, register
@@ -92,7 +93,7 @@ def quick() -> None:
     levels, _ = asyncio.run(replay(tx, [Level(20, 300), Level(50, 500)], API, day_ts(cfg, tl.SHADOW[0])))
     time.sleep(5)
     par = parity(first)
-    dec = run_live_gate(label_delay_days=30, latency_budget_ms=10.0, apply=False)
+    dec = run_live_gate(label_delay_days=30, latency_budget_ms=LATENCY_BUDGET_MS, apply=False)
     sent = sum(lv["sent"] for lv in levels)
     errors = sum(lv["errors"] for lv in levels)
     print(json.dumps({"latency": levels, "parity": par, "gate": dec.reason}, indent=2, default=str))
@@ -121,7 +122,7 @@ def main() -> None:
     out["parity"] = parity(first)
 
     # 3. gate v2 against v1, promote on a pass
-    d1 = run_live_gate(label_delay_days=30, latency_budget_ms=10.0, apply=True)
+    d1 = run_live_gate(label_delay_days=30, latency_budget_ms=LATENCY_BUDGET_MS, apply=True)
     out["gate_better"] = asdict(d1)
     if d1.promote:
         new = aliases()["champion"]
@@ -149,7 +150,7 @@ def main() -> None:
     }
 
     # 5. gate the equal challenger
-    d2 = run_live_gate(label_delay_days=30, latency_budget_ms=10.0, apply=True)
+    d2 = run_live_gate(label_delay_days=30, latency_budget_ms=LATENCY_BUDGET_MS, apply=True)
     out["gate_equal"] = asdict(d2)
     out["models_after"] = aliases()
     RESULTS.mkdir(parents=True, exist_ok=True)

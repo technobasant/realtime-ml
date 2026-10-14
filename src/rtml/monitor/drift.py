@@ -20,6 +20,13 @@ PSI_ALERT = 0.2
 # 90-day chargeback count fills up as history accumulates. PSI against a fixed reference
 # fires on them whether or not anything has changed.
 TRENDING = frozenset({"account_age_days", "cust_chargebacks_90d"})
+# Features with a daily cycle: any window shorter than a day differs from a whole-day
+# reference by construction (hour_of_day reached PSI 5 on a 3,000-transaction window).
+SEASONAL = frozenset({"hour_of_day"})
+
+
+def kind(feature: str) -> str:
+    return "trending" if feature in TRENDING else "seasonal" if feature in SEASONAL else "behavioural"
 
 
 def edges(ref: FloatArray, bins: int = 10) -> FloatArray:

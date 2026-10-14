@@ -108,3 +108,22 @@ def test_request_features_treat_unseen_entities_as_zero_history() -> None:
     assert out.loc[1, "is_new_device"] == 1.0
     assert out.loc[1, "cust_txn_count_24h"] == 0.0
     assert np.isnan(out.loc[1, "is_foreign"])
+
+
+def test_serving_row_equals_training_matrix(small: Small) -> None:
+    """The pandas-free serving transform must match the training transform on every row."""
+    from rtml.features.defs import MODEL_FEATURES_V2, model_matrix, request_row
+
+    d, tx, _ = small
+    rows = pit_join(get_store(d, redis="", apply=False), tx.iloc[len(tx) // 2 :])
+    expected = model_matrix(rows, MODEL_FEATURES_V2).to_numpy()
+    recs = rows.to_dict(orient="records")
+    # what the API sees: missing features arrive as None, timestamps as ISO strings
+    for r in recs:
+        r["ts"] = r["ts"].isoformat()
+        for k, v in r.items():
+            if isinstance(v, float) and np.isnan(v):
+                r[k] = None
+    got = np.vstack([request_row(r, MODEL_FEATURES_V2) for r in recs])
+    # epoch seconds near 1.8e9 round differently by a few hundred nanoseconds in the two paths
+    np.testing.assert_allclose(got, expected, rtol=1e-12, atol=1e-6, equal_nan=True)

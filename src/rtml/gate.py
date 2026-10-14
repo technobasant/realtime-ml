@@ -32,6 +32,10 @@ from rtml.metrics import case_cost
 
 FloatArray = NDArray[np.float64]
 
+# The model's share of a 20 ms scoring SLO at p99; the feature fetch and the network
+# take the rest. Measured on the serving path: request features plus predict.
+LATENCY_BUDGET_MS = 2.0
+
 
 @dataclass(frozen=True)
 class Scored:
@@ -103,7 +107,7 @@ def decide(
     amount: FloatArray,
     *,
     alpha: float = 0.05,
-    latency_budget_ms: float = 10.0,
+    latency_budget_ms: float = LATENCY_BUDGET_MS,
     n_boot: int = 1000,
     seed: int = 0,
 ) -> Decision:
@@ -157,7 +161,7 @@ def main() -> None:
 
     p = argparse.ArgumentParser(description="Compare challenger and champion on the shadow log.")
     p.add_argument("--label-delay-days", type=float, default=30.0)
-    p.add_argument("--latency-budget-ms", type=float, default=10.0)
+    p.add_argument("--latency-budget-ms", type=float, default=LATENCY_BUDGET_MS)
     p.add_argument("--apply", action="store_true", help="move the champion alias if the gate passes")
     a = p.parse_args()
     d = run_live_gate(a.label_delay_days, a.latency_budget_ms, a.apply)
