@@ -4,10 +4,10 @@
 
 First release.
 
-- A seeded generator of payments for Lumen & Loom, a fictional homewares retailer:
-  8,000 customers over 90 days, card-testing bursts, account takeovers and lone
-  anomalies, legitimate behaviour that overlaps them, chargebacks that arrive a median
-  week late (15% never), and a drift switch.
+- A reproducible generator of payments for Lumen & Loom, an online homewares retailer
+  (a standard e-commerce scenario): 8,000 customers over 90 days, card-testing bursts,
+  account takeovers and lone anomalies, legitimate behaviour that overlaps them,
+  chargebacks that arrive a median week late (15% never), and a drift switch.
 - Window features implemented twice: SQL window functions in DuckDB for the backfill,
   an incremental per-entity state machine for the stream. A parity test holds them equal
   row for row, and `SKEW_BUG=1` plants a defect it must catch.

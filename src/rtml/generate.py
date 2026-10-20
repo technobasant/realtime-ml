@@ -1,4 +1,5 @@
-"""Seeded synthetic payments for a fictional e-commerce company, with fraud and late labels.
+"""Reproducible generated payments for an online retailer — a standard e-commerce
+scenario — with fraud and late labels.
 
 The generator is the ground truth for every measurement in this repository, so it is
 deterministic for a given seed and every fraud pattern is tagged with its type.

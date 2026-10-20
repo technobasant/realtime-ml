@@ -29,8 +29,8 @@ figures contain no real network hops, and a production deployment would add them
 
 ## The data
 
-A seeded generator ([`rtml/generate.py`](src/rtml/generate.py)) of payments for Lumen &
-Loom, a fictional homewares retailer. Seed 7, 8,000 customers, 90 days from
+A reproducible generator ([`rtml/generate.py`](src/rtml/generate.py)) of payments for Lumen &
+Loom, an online homewares retailer (a standard e-commerce scenario). Seed 7, 8,000 customers, 90 days from
 2026-07-01: **874,446 transactions, 0.80% fraud.**
 
 * **Legitimate** customers have a home country, one or two cards, one to three devices,

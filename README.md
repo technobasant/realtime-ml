@@ -5,8 +5,9 @@
 ![python](https://img.shields.io/badge/python-3.12-blue)
 
 **A real-time fraud model whose leakage, skew and label delay are measured, not just
-avoided.** Payments for Lumen & Loom, a fictional homewares retailer, flow through Kafka
-into a stream processor that keeps window features in Feast's online store. A FastAPI
+avoided.** Payments for Lumen & Loom, an online homewares retailer (a standard
+e-commerce scenario), flow through Kafka into a stream processor that keeps window
+features in Feast's online store. A FastAPI
 service scores each payment with the champion model and the challenger in shadow and logs
 both; a gate promotes the challenger only on a statistically significant, paired
 improvement. A monitor watches for drift and Prometheus alerts on it.
@@ -15,7 +16,7 @@ Most of the ways a model like this fails happen before it is served: a training 
 reads the future, a backfill that computes a feature differently from the stream, labels
 that arrive weeks after the transaction, a monitor that cries wolf every evening. Each of
 those is built here on purpose, next to the correct version, and the difference is
-measured on seeded synthetic data with injected fraud patterns and a drift switch.
+measured on reproducible generated data with injected fraud patterns and a drift switch.
 Nothing comes from a real company or a restricted dataset.
 
 ## What the runs showed
@@ -40,7 +41,7 @@ Each failure here changed the design; the [failure log](#failure-log) lists what
 
 ```mermaid
 flowchart LR
-  gen["replayer<br/>(seeded payments)"] -->|"1 · POST /score"| api
+  gen["replayer<br/>(generated payments)"] -->|"1 · POST /score"| api
   gen -->|"2 · publish after the decision"| kafka[["Kafka 4.3.1<br/>transactions"]]
 
   subgraph serve["serving"]
@@ -144,7 +145,7 @@ What went wrong while building this, and what changed because of it.
 
 ## Limits
 
-* **Synthetic data.** The absolute scores describe the generator. The comparisons —
+* **Generated data.** The absolute scores describe the generator. The comparisons —
   naive against PIT, mature against immature labels, one monitor against another — are the
   findings; the 0.94 is not.
 * **One host.** Every container shares one VM, so the latency figures contain no network
@@ -179,7 +180,7 @@ What went wrong while building this, and what changed because of it.
 
 ```
 src/rtml/
-  generate.py          seeded payments, fraud patterns, late labels, drift switch
+  generate.py          generated payments (fixed seed), fraud patterns, late labels, drift switch
   features/            defs.py (contract + request transform), batch.py (SQL),
                        online.py (stream state), naive.py (the leaky join)
   store.py             the Feast repository, in code
