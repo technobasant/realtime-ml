@@ -17,7 +17,6 @@ reads the future, a backfill that computes a feature differently from the stream
 that arrive weeks after the transaction, a monitor that cries wolf every evening. Each of
 those is built here on purpose, next to the correct version, and the difference is
 measured on reproducible generated data with injected fraud patterns and a drift switch.
-Nothing comes from a real company or a restricted dataset.
 
 ## What the runs showed
 

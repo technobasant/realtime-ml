@@ -48,7 +48,7 @@ Loom, an online homewares retailer (a standard e-commerce scenario). Seed 7, 8,0
   closer to normal — card testing spread over 4–8 hours with more device rotation, takeovers
   mostly from the home country at 1.2–3× — and every price rises 15%.
 
-The absolute scores below describe this generator, not real fraud. The comparisons are
+The absolute scores below describe this generator, not fraud in production. The comparisons are
 the point: the same data, the same model, one thing changed.
 
 **The calendar** ([`rtml/timeline.py`](src/rtml/timeline.py)). Days 0–13 only build feature
